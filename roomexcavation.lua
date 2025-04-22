@@ -13,15 +13,40 @@ local function getDimensions()
     return length, width, height
   end
   
-  -- Function to ensure the turtle has enough fuel
-  local function checkFuel(requiredFuel)
+  -- Function to refuel the turtle
+local function refuel()
+    print("Returning to refuel...")
+    -- Return to starting position
+    turtle.turnLeft()
+    moveForward(halfLength)
+    turtle.turnLeft()
+    moveForward(halfWidth)
+    turtle.turnRight()
+  
+    -- Attempt to refuel
+    for slot = 1, 16 do
+      turtle.select(slot)
+      if turtle.refuel(0) then
+        turtle.refuel()
+        print("Refueled successfully.")
+        return true
+      end
+    end
+  
+    print("No fuel available in inventory. Please add fuel and press Enter to continue.")
+    read()
+    return refuel() -- Retry refueling
+  end
+
+  -- Modify checkFuel to include refueling logic
+local function checkFuel(requiredFuel)
     local fuelLevel = turtle.getFuelLevel()
     if fuelLevel == "unlimited" then
       return true
     end
     if fuelLevel < requiredFuel then
       print("Not enough fuel. Required: " .. requiredFuel .. ", Available: " .. fuelLevel)
-      return false
+      return refuel()
     end
     return true
   end
@@ -87,22 +112,17 @@ local function getDimensions()
     end
   end
   
-  -- Main function
-  local function main()
+ -- Update main function to handle refueling during excavation
+local function main()
     local length, width, height = getDimensions()
     if not length or not width or not height then
       print("Invalid input. Please enter numeric values.")
       return
     end
   
-    local requiredFuel = length * width * height
-    if not checkFuel(requiredFuel) then
-      return
-    end
-  
     -- Calculate half dimensions
-    local halfLength = math.floor(length / 2)
-    local halfWidth = math.floor(width / 2)
+    halfLength = math.floor(length / 2)
+    halfWidth = math.floor(width / 2)
   
     print("Moving to starting corner...")
   
@@ -142,6 +162,11 @@ local function getDimensions()
             turtle.turnRight()
           end
         end
+      end
+  
+      -- Check fuel level periodically
+      if not checkFuel(length * width * (height - h)) then
+        return
       end
     end
   
