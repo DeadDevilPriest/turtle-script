@@ -1,22 +1,46 @@
 -- Dynamic Excavation Script for ComputerCraft Turtle
--- The turtle starts at the center of the room's length, at the front-left corner.
+-- The turtle calculates the room size based on movement instructions and confirms with the player.
 
--- Function to prompt user for dimensions
-local function getDimensions()
-    print("Enter the room dimensions:")
-    io.write("Length (forward): ")
-    local length = tonumber(read())
-    io.write("Width (right): ")
-    local width = tonumber(read())
-    io.write("Height (up): ")
-    local height = tonumber(read())
+-- Function to prompt user for movement instructions
+local function getMovementInstructions()
+    print("Enter the number of blocks to move/dig in each direction:")
+    io.write("Go right x blocks: ")
+    local right = tonumber(read())
+    io.write("Go left x blocks: ")
+    local left = tonumber(read())
+    io.write("Go forward x blocks: ")
+    local forward = tonumber(read())
+    io.write("Go backward x blocks: ")
+    local backward = tonumber(read())
+    io.write("Go up x blocks: ")
+    local up = tonumber(read())
+    io.write("Go down x blocks: ")
+    local down = tonumber(read())
+    return right, left, forward, backward, up, down
+end
+
+-- Function to calculate room dimensions based on movement instructions
+local function calculateRoomDimensions(right, left, forward, backward, up, down)
+    local width = right + left
+    local length = forward + backward
+    local height = up + down
     return length, width, height
+end
+
+-- Function to confirm room dimensions with the player
+local function confirmRoomDimensions(length, width, height)
+    print("The calculated room size is:")
+    print("Length (forward): " .. length)
+    print("Width (right): " .. width)
+    print("Height (up): " .. height)
+    print("Is this correct? (yes/no)")
+    local response = read()
+    return response:lower() == "yes"
 end
 
 -- Function to refuel the turtle
 local function refuel()
     print("Returning to refuel...")
-    -- Attempt to refuel
     for slot = 1, 16 do
         turtle.select(slot)
         if turtle.refuel(0) then
@@ -25,10 +49,9 @@ local function refuel()
             return true
         end
     end
-
     print("No fuel available in inventory. Please add fuel and press Enter to continue.")
     read()
-    return refuel() -- Retry refueling
+    return refuel()
 end
 
 -- Function to check fuel level and refuel if necessary
@@ -75,12 +98,77 @@ end
 -- Function to move forward n steps, handling obstacles and fuel
 local function moveForward(steps)
     for i = 1, steps do
-        if not checkFuel(1) then -- Ensure enough fuel for each step
+        if not checkFuel(1) then
             return false
         end
         digForward()
     end
     return true
+end
+
+-- Function to move the turtle based on movement instructions
+local function moveTurtle(right, left, forward, backward, up, down)
+    -- Move right
+    if right > 0 then
+        print("Moving right " .. right .. " blocks...")
+        turtle.turnRight()
+        moveForward(right)
+        turtle.turnLeft()
+    end
+
+    -- Move left
+    if left > 0 then
+        print("Moving left " .. left .. " blocks...")
+        turtle.turnLeft()
+        moveForward(left)
+        turtle.turnRight()
+    end
+
+    -- Move forward
+    if forward > 0 then
+        print("Moving forward " .. forward .. " blocks...")
+        moveForward(forward)
+    end
+
+    -- Move backward
+    if backward > 0 then
+        print("Moving backward " .. backward .. " blocks...")
+        turtle.turnRight()
+        turtle.turnRight()
+        moveForward(backward)
+        turtle.turnRight()
+        turtle.turnRight()
+    end
+
+    -- Move up
+    if up > 0 then
+        print("Moving up " .. up .. " blocks...")
+        for i = 1, up do
+            if not checkFuel(1) then
+                return false
+            end
+            while not turtle.up() do
+                turtle.digUp()
+                sleep(0.5)
+            end
+        end
+    end
+
+    -- Move down
+    if down > 0 then
+        print("Moving down " .. down .. " blocks...")
+        for i = 1, down do
+            if not checkFuel(1) then
+                return false
+            end
+            while not turtle.down() do
+                turtle.digDown()
+                sleep(0.5)
+            end
+        end
+    end
+
+    print("Movement complete.")
 end
 
 -- Function to excavate a single layer
@@ -111,86 +199,27 @@ end
 
 -- Main function to handle excavation
 local function main()
-    local length, width, height = getDimensions()
-    if not length or not width or not height then
-        print("Invalid input. Please enter numeric values.")
-        return
-    end
-
-    -- Calculate half dimensions
-    local halfLength = math.floor(length / 2)
-    local halfWidth = math.floor(width / 2)
-
-    print("Moving to starting corner...")
-
-    -- Move to starting corner
-    if not moveForward(halfWidth) then
-        print("Failed to move to starting corner (width).")
-        return
-    end
-    turtle.turnRight()
-    if not moveForward(halfLength) then
-        print("Failed to move to starting corner (length).")
-        return
-    end
-    turtle.turnRight()
-    print("Reached starting corner.")
+    local right, left, forward, backward, up, down
+    repeat
+        right, left, forward, backward, up, down = getMovementInstructions()
+        local length, width, height = calculateRoomDimensions(right, left, forward, backward, up, down)
+        if not confirmRoomDimensions(length, width, height) then
+            print("Let's try again.")
+        end
+    until confirmRoomDimensions(length, width, height)
 
     print("Starting excavation...")
+    moveTurtle(right, left, forward, backward, up, down)
+
+    local length, width, height = calculateRoomDimensions(right, left, forward, backward, up, down)
 
     for h = 1, height do
         excavateLayer(length, width)
         if h < height then
             digDown()
             turtle.down()
-            -- Return to starting position for next layer
-            if width % 2 == 0 then
-                turtle.turnRight()
-                for i = 1, width - 1 do
-                    if not checkFuel(1) then
-                        return
-                    end
-                    digForward()
-                end
-                turtle.turnRight()
-            else
-                if length % 2 == 0 then
-                    turtle.turnLeft()
-                    for i = 1, width - 1 do
-                        if not checkFuel(1) then
-                            return
-                        end
-                        digForward()
-                    end
-                    turtle.turnLeft()
-                else
-                    turtle.turnRight()
-                    for i = 1, width - 1 do
-                        if not checkFuel(1) then
-                            return
-                        end
-                        digForward()
-                    end
-                    turtle.turnRight()
-                end
-            end
-        end
-
-        -- Check fuel level periodically
-        if not checkFuel(10) then
-            return
         end
     end
-
-    -- Return to center
-    for i = 1, height - 1 do
-        turtle.up()
-    end
-    turtle.turnLeft()
-    moveForward(halfLength)
-    turtle.turnLeft()
-    moveForward(halfWidth)
-    turtle.turnRight()
 
     print("Excavation complete!")
 end
