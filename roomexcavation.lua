@@ -13,19 +13,6 @@ local function getDimensions()
     return length, width, height
   end
   
-  -- Function to ensure the turtle has enough fuel
-  local function checkFuel(requiredFuel)
-    local fuelLevel = turtle.getFuelLevel()
-    if fuelLevel == "unlimited" then
-      return true
-    end
-    if fuelLevel < requiredFuel then
-      print("Not enough fuel. Required: " .. requiredFuel .. ", Available: " .. fuelLevel)
-      return false
-    end
-    return true
-  end
-  
   -- Function to dig forward, handling obstacles
   local function digForward()
     while turtle.detect() do
