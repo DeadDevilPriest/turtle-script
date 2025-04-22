@@ -20,10 +20,18 @@ local function getMovementInstructions()
 end
 
 -- Function to calculate room dimensions based on movement instructions
-local function calculateRoomDimensions(right, left, forward, backward, up, down)
+local function calculateRoomDimensions(right, left, forward, backward, up, down, includeCurrentPosition)
     local width = right + left
     local length = forward + backward
     local height = up + down
+
+    -- Include the turtle's current position in the calculation if specified
+    if includeCurrentPosition then
+        width = width + 1
+        length = length + 1
+        height = height + 1
+    end
+
     return length, width, height
 end
 
@@ -200,9 +208,14 @@ end
 -- Main function to handle excavation
 local function main()
     local right, left, forward, backward, up, down
+    local includeCurrentPosition
+
     repeat
         right, left, forward, backward, up, down = getMovementInstructions()
-        local length, width, height = calculateRoomDimensions(right, left, forward, backward, up, down)
+        print("Should the turtle's current position be included in the room size? (yes/no)")
+        includeCurrentPosition = read():lower() == "yes"
+
+        local length, width, height = calculateRoomDimensions(right, left, forward, backward, up, down, includeCurrentPosition)
         if not confirmRoomDimensions(length, width, height) then
             print("Let's try again.")
         end
@@ -211,7 +224,7 @@ local function main()
     print("Starting excavation...")
     moveTurtle(right, left, forward, backward, up, down)
 
-    local length, width, height = calculateRoomDimensions(right, left, forward, backward, up, down)
+    local length, width, height = calculateRoomDimensions(right, left, forward, backward, up, down, includeCurrentPosition)
 
     for h = 1, height do
         excavateLayer(length, width)
