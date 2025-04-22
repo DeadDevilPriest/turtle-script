@@ -207,6 +207,18 @@ end
 
 -- Main function to handle excavation
 local function main()
+    print("Should the turtle move to a designated area first or start excavation from its current position? (move/start)")
+    local startOption = read():lower()
+
+    if startOption == "move" then
+        print("Enter movement instructions to reach the designated area:")
+        local right, left, forward, backward, up, down = getMovementInstructions()
+        moveTurtle(right, left, forward, backward, up, down)
+    elseif startOption ~= "start" then
+        print("Invalid option. Exiting...")
+        return
+    end
+
     local right, left, forward, backward, up, down
     local includeCurrentPosition
 
@@ -222,7 +234,6 @@ local function main()
     until confirmRoomDimensions(length, width, height)
 
     print("Starting excavation...")
-    moveTurtle(right, left, forward, backward, up, down)
 
     local length, width, height = calculateRoomDimensions(right, left, forward, backward, up, down, includeCurrentPosition)
 
