@@ -236,9 +236,6 @@ local function main()
             print("Failed to move to the designated area. Exiting...")
             return
         end
-    elseif startOption ~= "start" then
-        print("Invalid option. Exiting...")
-        return
     end
 
     local right, left, forward, backward, up, down
